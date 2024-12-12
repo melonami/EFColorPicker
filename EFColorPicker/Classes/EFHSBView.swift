@@ -258,6 +258,7 @@ public class EFHSBView: UIView, EFColorView, UITextFieldDelegate {
 
     private func ef_updateSlidersWithColorComponents(colorComponents: HSB) {
         brightnessView.value = colorComponents.brightness
+        AlphaView.value = colorComponents.alpha
     }
 
     @objc private func ef_colorDidChangeValue(sender: EFColorWheelView) {
