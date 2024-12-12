@@ -32,6 +32,8 @@ public class EFHSBView: UIView, EFColorView, UITextFieldDelegate {
     let EFColorSampleViewHeight: CGFloat = 30.0
     let EFViewMargin: CGFloat = 20.0
     let EFColorWheelDimension: CGFloat = 200.0
+    var EFAlpha = 1.0
+
 
     private let colorWheel = EFColorWheelView()
     public let brightnessView: EFColorComponentView = {
@@ -51,6 +53,18 @@ public class EFHSBView: UIView, EFColorView, UITextFieldDelegate {
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
+    
+    public let AlphaView: EFColorComponentView = {
+        let view = EFColorComponentView()
+        view.title = NSLocalizedString("Alpha", comment: "")
+        view.maximumValue = EFHSBColorComponentMaxValue
+        view.format = "%.2f"
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.setColors(colors: [.white,.black])
+        return view
+    }()
+    
+
     private var colorComponents = HSB(1, 1, 1, 1)
     private var layoutConstraints: [NSLayoutConstraint] = []
 
@@ -110,6 +124,8 @@ public class EFHSBView: UIView, EFColorView, UITextFieldDelegate {
         colorWheel.translatesAutoresizingMaskIntoConstraints = false
         addSubview(colorWheel)
         addSubview(brightnessView)
+        addSubview(AlphaView)
+
 
         colorWheel.addTarget(
             self, action: #selector(ef_colorDidChangeValue(sender:)), for: UIControl.Event.valueChanged
@@ -117,6 +133,10 @@ public class EFHSBView: UIView, EFColorView, UITextFieldDelegate {
         brightnessView.addTarget(
             self, action: #selector(ef_brightnessDidChangeValue(sender:)), for: UIControl.Event.valueChanged
         )
+        AlphaView.addTarget(
+            self, action: #selector(ef_alphaDidChangeValue(sender:)), for: UIControl.Event.valueChanged
+        )
+
         setNeedsUpdateConstraints()
     }
 
@@ -141,7 +161,9 @@ public class EFHSBView: UIView, EFColorView, UITextFieldDelegate {
         let views = [
             "colorSample": colorSample,
             "colorWheel": colorWheel,
-            "brightnessView": brightnessView
+            "brightnessView": brightnessView,
+            "alphaView": AlphaView,
+
         ]
 
         var layoutConstraints: [NSLayoutConstraint] = []
@@ -149,7 +171,8 @@ public class EFHSBView: UIView, EFColorView, UITextFieldDelegate {
             "H:|-margin-[colorSample]-margin-|",
             "H:|-margin-[colorWheel(>=color_wheel_dimension)]-margin-|",
             "H:|-margin-[brightnessView]-margin-|",
-            "V:|-margin-[colorSample(height)]-margin-[colorWheel]-margin-[brightnessView]-(>=margin@250)-|"
+            "H:|-margin-[alphaView]-margin-|",
+            "V:|-margin-[colorSample(height)]-margin-[colorWheel]-margin-[brightnessView]-margin-[alphaView]-(>=margin@250)-|"
         ]
         for visualFormat in visualFormats {
             layoutConstraints.append(
@@ -182,13 +205,15 @@ public class EFHSBView: UIView, EFColorView, UITextFieldDelegate {
         let views = [
             "colorSample": colorSample,
             "colorWheel": colorWheel,
-            "brightnessView": brightnessView
+            "brightnessView": brightnessView,
+            "alphaView": AlphaView,
+
         ]
 
         var layoutConstraints: [NSLayoutConstraint] = []
         let visualFormats = [
             "H:|-margin-[colorSample]-margin-|",
-            "H:|-margin-[colorWheel(>=color_wheel_dimension)]-margin-[brightnessView]-(margin@500)-|",
+            "H:|-margin-[colorWheel(>=color_wheel_dimension)]-margin-[brightnessView]-(margin@500)-margin-[alphaView]-(margin@500)-|",
             "V:|-margin-[colorSample(height)]-margin-[colorWheel]-(margin@500)-|"
         ]
         for visualFormat in visualFormats {
@@ -238,6 +263,8 @@ public class EFHSBView: UIView, EFColorView, UITextFieldDelegate {
     @objc private func ef_colorDidChangeValue(sender: EFColorWheelView) {
         colorComponents.hue = sender.hue
         colorComponents.saturation = sender.saturation
+        self.color = self.color.withAlphaComponent(self.EFAlpha)
+
         self.delegate?.colorView(self, didChangeColor: self.color)
         self.reloadData()
     }
@@ -245,7 +272,18 @@ public class EFHSBView: UIView, EFColorView, UITextFieldDelegate {
     @objc private func ef_brightnessDidChangeValue(sender: EFColorComponentView) {
         colorComponents.brightness = sender.value
         self.colorWheel.brightness = sender.value
+        self.color = self.color.withAlphaComponent(self.EFAlpha)
+
         self.delegate?.colorView(self, didChangeColor: self.color)
         self.reloadData()
     }
+    
+    @objc private func ef_alphaDidChangeValue(sender: EFColorComponentView) {
+        self.EFAlpha = sender.value
+        self.color = self.color.withAlphaComponent(self.EFAlpha)
+        
+        self.delegate?.colorView(self, didChangeColor: self.color)
+        
+    }
+
 }
